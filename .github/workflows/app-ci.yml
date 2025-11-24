@@ -3,17 +3,16 @@ name: "App CI"
 run-name: App CI for ${{ inputs.service_name }}
 
 on:
-    
   push:
     branches: ["dev",]
     paths:
-      - "apps/**"
+      - "app/**"
       - ".github/"
 
   pull_request:
     branches: [dev]
     paths:
-      - "apps/**"
+      - "app/**"
       - ".github/"
 
 
