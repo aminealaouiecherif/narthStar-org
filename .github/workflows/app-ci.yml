@@ -1,0 +1,74 @@
+name: "App CI"
+
+run-name: App CI for ${{ inputs.service_name }}
+
+on:
+
+  workflow_call:
+    inputs:
+      environment:
+        description: "GCP environment to deploy to (NONPROD-001 / dev / cae / prd)"
+        type: string
+        required: true
+      
+      cuncurrency_group: 
+        description: "GH Concurrency group name"
+        type: string
+        required: false
+        default: ''
+
+      service_name:
+        description: "Cloud run Job/Service name: will be used as the docker image name"
+        type: string
+        required: true
+
+      src_path:
+        description: "Path to the application source code"
+        type: string
+        required: true
+
+      buildpacks:
+          description: "Paketo to Buildpacks image to use for the application docker build"
+          type: string
+          required: true
+
+      docker_build_envs:
+          description: "Space separated list of Environment variables to pass to the docker build command. Example: 'ENV1=VAL1 ENV2=VAL2'"
+          type: string
+          required: false
+          default: ''
+
+jobs:
+  CI-cloudrun:
+    permissions:
+      contents: "read"
+      id-token: "write"
+      packages: "read"
+    runs-on: ["self-hosted", "linux"]
+    environment: ${{ inputs.environment }}
+    concurrency: 
+        group: ${{ inputs.cuncurrency_group != '' && inputs.cuncurrency_group || inputs.service_name }}
+        cancel-in-progress: false
+    name: "CI-${{ inputs.service_name }}"
+    env:
+        GCP_AR_URL: ${{ vars.REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.REGISTRY_NAME }}
+
+    
+    steps:
+      - uses: actions/checkout@v4
+      # add step to track and run this CI only when source code has new code changes 
+
+      - name: Create runsha version
+        id: runsha
+        run: |
+          short_sha=`echo $GITHUB_SHA | cut -c1-6`
+          echo "::set-output name=runsha::$GITHUB_RUN_NUMBER-$short_sha"
+        shell: bas  
+        
+      - id: "wifAuth"
+        name: "Authenticate to Google Cloud"
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'terraform@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
+          token_format: "access_token"

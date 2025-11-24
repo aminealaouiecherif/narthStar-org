@@ -1,0 +1,56 @@
+name: Cloud Run Full CI/CD
+
+on:
+    
+  push:
+    branches: ["main", ]
+    paths:
+      - "apps/**"
+      - ".github/workflows/serverless_full_cicd.yml"
+
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "apps/**"
+      - "infra/pandapple/**"
+      - ".github/workflows/serverless_full_cicd.yml"
+
+  workflow_dispatch:
+
+jobs:
+    CI-frontend:
+      uses: aminealaouiecherif/narthStar-org/blob/dev/.github/workflows/app-ci.yml
+      with:
+        service_name: "pandapple-front"
+        buildpacks: "gcr.io/paketo-buildpacks/nginx"
+        src_path: "apps/pandapple/src-front"
+      secrets: inherit
+
+
+    CI-backend:
+      uses: aminealaouiecherif/narthStar-org/blob/dev/.github/workflows/app-ci.yml
+      with:
+        service_name: "pandapple-front"
+        buildpacks: "gcr.io/paketo-buildpacks/nginx"
+        src_path: "apps/pandapple/src-front"
+      secrets: inherit
+
+    
+    CD-pandapple-TF-deploy: #
+      uses: aminealaouiecherif/narthStar-org/blob/dev/.github/workflows/app-ci.yml
+      with:
+        service_name: "pandapple-front"
+        buildpacks: "gcr.io/paketo-buildpacks/nginx"
+        src_path: ""
+      secrets: inherit
+
+    
+    CD-pandapple-deploy: #Deploy to production environment
+    #   if: github.ref == 'refs/heads/production' 
+        needs: [CD-pandapple-TF-deploy]
+        uses: afkl-airspace/actions-gcp/.github/workflows/tf_deploy.yaml@feature/cloudfun_full_cicd
+        with:
+            environment: "prd"
+            terraform-apply: "true"
+            working-directory: "./infra/pandapple"
+        secrets: inherit
