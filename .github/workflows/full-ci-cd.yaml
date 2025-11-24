@@ -3,17 +3,16 @@ name: Cloud Run Full CI/CD
 on:
     
   push:
-    branches: ["main", ]
+    branches: ["staging", "production"]
     paths:
       - "apps/**"
-      - ".github/workflows/serverless_full_cicd.yml"
+      - ".github/"
 
   pull_request:
-    branches: ["main"]
+    branches: ["staging", "production"]
     paths:
       - "apps/**"
-      - "infra/pandapple/**"
-      - ".github/workflows/serverless_full_cicd.yml"
+      - ".github/"
 
   workflow_dispatch:
 
@@ -21,7 +20,7 @@ jobs:
     CI-frontend:
       uses: aminealaouiecherif/narthStar-org/blob/dev/.github/workflows/app-ci.yml
       with:
-        service_name: "pandapple-front"
+        service_name: "northstar-frontend"
         buildpacks: "gcr.io/paketo-buildpacks/nginx"
         src_path: "apps/pandapple/src-front"
       secrets: inherit
@@ -30,9 +29,9 @@ jobs:
     CI-backend:
       uses: aminealaouiecherif/narthStar-org/blob/dev/.github/workflows/app-ci.yml
       with:
-        service_name: "pandapple-front"
+        service_name: "northstar-backend"
         buildpacks: "gcr.io/paketo-buildpacks/nginx"
-        src_path: "apps/pandapple/src-front"
+        src_path: "apps/front"
       secrets: inherit
 
     
@@ -52,5 +51,5 @@ jobs:
         with:
             environment: "prd"
             terraform-apply: "true"
-            working-directory: "./infra/pandapple"
+            working-directory: "./infra/"
         secrets: inherit
